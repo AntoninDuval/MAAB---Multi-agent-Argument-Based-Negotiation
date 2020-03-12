@@ -1,0 +1,8 @@
+;Electric Engine;Diesel Engine;Fuel Engine
+NOISE;Very Good;Very Bad;Very Good
+CONSUMPTION;Very Good;Very Bad;Bad
+PRODUCTION_COST;Good;Bad;Very Good
+ENVIRONMENT_IMPACT;Good;Bad;Very Bad
+DURABILITY;Bad;Good;Bad
+WEIGHT;Very Bad;Very Good;Very Good
+POPULARITY;Very Bad;Very Good;Good
