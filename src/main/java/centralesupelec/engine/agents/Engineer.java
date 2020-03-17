@@ -100,11 +100,11 @@ public class Engineer extends Agent {
                         if (reply.getPerformative() == ACLMessage.INFORM_REF) {
                             // This is the list item to discussed
 
-                                //list_initial_items = create_list_item_from_string(reply.getContent());
                                 agent_pref = new Preferences(use_real);
-                                list_initial_items = use_csv_preferences(myAgent.getLocalName());
+                                list_initial_items = create_list_item_from_string(reply.getContent());
+                                //list_initial_items = use_csv_preferences(myAgent.getLocalName());
                                 list_items = new ArrayList<>(list_initial_items);
-                                //agent_pref.generating_random_preferences(list_initial_items, nb_crit, nb_value);
+                                agent_pref.generating_random_preferences(list_initial_items, nb_crit, nb_value);
 
                                 //agent_pref.print_preferences(list_initial_items);
 

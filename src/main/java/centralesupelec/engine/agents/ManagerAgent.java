@@ -65,7 +65,6 @@ public class ManagerAgent extends Agent{
                 myAgent.doDelete();
             }
         }
-
     }
 
     public String convert_to_string_list(ArrayList<Item> list){
@@ -75,5 +74,4 @@ public class ManagerAgent extends Agent{
         }
         return final_string;
     }
-
 }

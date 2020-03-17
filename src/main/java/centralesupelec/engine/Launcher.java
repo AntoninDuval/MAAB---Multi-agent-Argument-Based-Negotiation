@@ -37,7 +37,7 @@ public class Launcher implements Serializable {
         Profile pMain = new ProfileImpl("localhost", 5666, null);
         AgentContainer mc = rt.createMainContainer(pMain);
 
-        Boolean use_real = Boolean.TRUE; // CHANGE THIS VALUE TO USE REAL PREFERENCES OR FAKE ONE FOR TESTING
+        Boolean use_real = Boolean.FALSE; // CHANGE THIS VALUE TO USE REAL PREFERENCES OR FAKE ONE FOR TESTING
 
         ArrayList<Item> list_inital_items = new ArrayList<>();
         if (use_real){
