@@ -11,30 +11,32 @@ public class Item implements Serializable {
     private String name;
     private String description;
 
-    public Item(String name, String description){
+    public Item(String name, String description) {
         this.name = name;
         this.description = description;
     }
 
-    public String get_name(){
+    public String get_name() {
         return this.name;
     }
-    public String get_description(){
+
+    public String get_description() {
         return this.description;
     }
 
-    public Value get_value(Preferences agent_pref, CriterionName criterion_name){
+    public Value get_value(Preferences agent_pref, CriterionName criterion_name) {
         ArrayList<CriterionValue> list_values = agent_pref.get_criterion_values_list();
         Optional<CriterionValue> criterion_value = list_values.stream()
                 .filter(elt -> elt.get_criterion_name().equals(criterion_name) && elt.get_item().equals(this))
                 .findFirst();
         Value result = null;
-        if (criterion_value.isPresent()){
+        if (criterion_value.isPresent()) {
             result = criterion_value.get().get_value();
-        } return result;
+        }
+        return result;
     }
 
-    public Double get_score(Preferences agent_pref){
+    public Double get_score(Preferences agent_pref) {
         return agent_pref.get_score(this);
     }
 
@@ -50,4 +52,14 @@ public class Item implements Serializable {
             return null;
         }
     }
+
+    public static ArrayList<Item> generate_random_items(int nb_items) {
+        ArrayList<Item> list_inital_items = new ArrayList<>();
+        for (int j = 1; j <= nb_items; j++) {
+            list_inital_items.add(new Item("Motor " + j, "A cool motor"));
+        }
+        return list_inital_items;
+    }
 }
+
+

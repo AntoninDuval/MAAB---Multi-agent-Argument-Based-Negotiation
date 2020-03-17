@@ -1,8 +1,8 @@
-;Electric Engine;Diesel Engine;Fuel Engine
-POPULARITY;Very Bad;Very Good;Very Bad
-WEIGHT;Very Bad;Very Good;Very Good
-DURABILITY;Bad;Good;Very Good
-ENVIRONMENT_IMPACT;Bad;Good;Bad
-PRODUCTION_COST;Good;Bad;Bad
-CONSUMPTION;Very Good;Very Bad;Very Good
-NOISE;Very Good;Very Bad;Good
+;Electric Engine;Diesel Engine;Fuel Engine;Secret Engine
+POPULARITY;Very Bad;Very Bad;Very Bad;Very Good
+WEIGHT;Very Bad;Very Bad;Very Good;Good
+DURABILITY;Bad;Good;Very Good;Very Good
+ENVIRONMENT_IMPACT;Bad;Good;Bad;Very Good
+PRODUCTION_COST;Good;Bad;Bad;Bad
+CONSUMPTION;Very Good;Very Bad;Very Good;Very Good
+NOISE;Very Good;Very Bad;Good;Good

@@ -6,22 +6,23 @@ import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.wrapper.StaleProxyException;
 
 import java.util.ArrayList;
 
 public class ManagerAgent extends Agent{
 
-    private ArrayList<Item> choosen_items =  null;
-    private Item[] list_initials_items = {};
+    private ArrayList<Item> list_initials_items;
     private AID[] EngineersAgents = {new AID("engineer1", AID.ISLOCALNAME),
                                     new AID("engineer2", AID.ISLOCALNAME)};
 
+    @SuppressWarnings("unchecked")
     protected void setup() {
         // Printout a welcome message
         System.out.println("Hallo! Manager-agent "+getLocalName()+" is ready.");
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
-            list_initials_items = (Item[]) args[0];
+            list_initials_items = (ArrayList<Item>) args[0];
             for(Item item : list_initials_items){
                 System.out.println("Manager wants to discuss about " + item.get_name());
             }
@@ -32,7 +33,7 @@ public class ManagerAgent extends Agent{
 
     protected void takeDown() {
         // Printout a dismissal message
-        System.out.println("Manager agent " + getAID().getName() + " terminating.");
+        System.out.println("Manager agent " + getLocalName() + " terminating.");
     }
 
 
@@ -61,12 +62,13 @@ public class ManagerAgent extends Agent{
             if (msg != null) {
                 String item_name = msg.getContent();
                 System.out.println(getLocalName() + " is informed that " + item_name + " is the selected item");
+                myAgent.doDelete();
             }
         }
 
     }
 
-    public String convert_to_string_list(Item[] list){
+    public String convert_to_string_list(ArrayList<Item> list){
         String final_string = "";
         for(Item item:list){
             final_string += item.get_name() + "_";

@@ -21,7 +21,7 @@ public class Tester {
         Value BAD = new Value("Bad");
         Value VERY_BAD = new Value("Very Bad");
 
-        Preferences agent_pref = new Preferences();
+        Preferences agent_pref = new Preferences(Boolean.TRUE);
 
         agent_pref.set_criterion_name_list(new ArrayList<>(Arrays.asList(PRODUCTION_COST,ENVIRONMENT_IMPACT,CONSUMPTION,DURABILITY)));
         System.out.println(agent_pref.get_criterion_name_list());

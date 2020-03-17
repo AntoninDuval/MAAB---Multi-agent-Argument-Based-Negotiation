@@ -14,10 +14,13 @@ public class Preferences {
 
     private ArrayList<CriterionName> criterion_name_list = new ArrayList<>();
     private ArrayList<CriterionValue> criterion_values = new ArrayList<>();
+    private Boolean use_real;
+    private int nb_values;
 
-    String PATH = "C:\\Users\\Anton\\Git_Project\\template_java_jade\\src\\main\\java\\centralesupelec\\engine\\preferences\\";
+    String PATH = "C:\\Users\\Anton\\Git_Project\\MAAB---Multi-agent-Argument-Based-Negotiation\\src\\main\\java\\centralesupelec\\engine\\preferences\\";
 
-    public Preferences() {
+    public Preferences(Boolean use_real) {
+        this.use_real = use_real;
     }
 
     // Constructor
@@ -68,7 +71,7 @@ public class Preferences {
         Stream<CriterionValue> sp;
         sp = this.criterion_values.stream();
         Double score = sp.filter(x -> x.get_item().get_name().equals(item.get_name())) // get the weights and value of each criterion
-                .map(x -> (number_of_criterion - criterion_name_list.indexOf(x.get_criterion_name()))* (double) x.get_value().get_score())
+                .map(x -> (number_of_criterion - criterion_name_list.indexOf(x.get_criterion_name()))* (double) x.get_value().get_score(use_real))
                 .reduce((double) 1, Double::sum);
         return score / get_number_of_criterions(item);
     }
@@ -170,7 +173,6 @@ public class Preferences {
                 for(int k=1; k <= data.length-1; k++){
                     item_list.add(new Item(data[k], "An engine"));
                 }
-
             }
             else{
                 CriterionName criterionName = new CriterionName(data[0]);
@@ -184,33 +186,61 @@ public class Preferences {
             }
             i+=1;
         }
+        nb_values = 7;
         csvReader.close();
         set_criterion_name_list(list_criterions_name);
 
         return item_list;
     }
 
-    public void generating_random_preferences(List<Item> list_item){
+    public Boolean getUse_real() {
+        return use_real;
+    }
 
+    public int getNb_values() {
+        return nb_values;
+    }
+
+    public void generating_random_preferences(List<Item> list_item, int nb_crit, int nb_value){
+
+        ArrayList<CriterionName> list_criterions_name = new ArrayList<>();
         // Generating a list of criterions
-        ArrayList<CriterionName> list_criterions_name = new ArrayList<>(Arrays.asList(new CriterionName("PRODUCTION_COST"),
-                                            new CriterionName("ENVIRONMENT_IMPACT"),
-                                            new CriterionName("CONSUMPTION"),
-                                            new CriterionName("DURABILITY"),
-                                            new CriterionName("NOISE"),
-                                            new CriterionName("WEIGHT"),
-                                            new CriterionName("POPULARITY")));
+        if (use_real) {
+            list_criterions_name.add(new CriterionName("PRODUCTION_COST"));
+            list_criterions_name.add(new CriterionName("ENVIRONMENT_IMPACT"));
+            list_criterions_name.add(new CriterionName("CONSUMPTION"));
+            list_criterions_name.add(new CriterionName("DURABILITY"));
+            list_criterions_name.add(new CriterionName("NOISE"));
+            list_criterions_name.add(new CriterionName("WEIGHT"));
+            list_criterions_name.add(new CriterionName("POPULARITY"));
+            nb_values=7;
+        }
+        else{
+            nb_values= nb_value;
+            for (int j = 1; j <= nb_crit; j++){
+                list_criterions_name.add(new CriterionName("Criterion_" + j));
+            }
+        }
 
 
         Collections.shuffle(list_criterions_name);// We shuffle the criterion
 
         set_criterion_name_list(list_criterions_name);
 
-        // Generating a list of values
-        ArrayList<Value> list_values = new ArrayList<>(Arrays.asList(new Value("Very Good"),
-                new Value("Good"),
-                new Value("Bad"),
-                new Value("Very Bad")));
+        ArrayList<Value> list_values = new ArrayList<>();
+        if (use_real) {
+            // Generating a list of values
+            list_values = new ArrayList<>(Arrays.asList(new Value("Very Good"),
+                    new Value("Good"),
+                    new Value("Bad"),
+                    new Value("Very Bad")));
+        }
+        else{
+            for (int j = 1; j <= nb_value; j++){
+                list_values.add(new Value("Value_" + j));
+            }
+
+        }
 
         //Randomly create criterion value
         for(Item item : list_item){

@@ -9,36 +9,48 @@ import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.wrapper.StaleProxyException;
 import javafx.util.Pair;
 
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Engineer extends Agent {
 
-    private Preferences agent_pref;
-    private AID manager_agent = new AID("manager", AID.ISLOCALNAME);
-    private String state;
+    private Preferences agent_pref; // Agent's preference
+    private AID manager_agent = new AID("manager", AID.ISLOCALNAME); //AID for manager
+    private String state; // State the engineer is in
 
-    private Item proposed_item;
-    private Boolean position_item;
-    private Arguments argument_item;
-    private Boolean first_argument = Boolean.FALSE;
 
-    public ArrayList<Item> list_initial_items = null;
-    public ArrayList<Item> list_items = null;
-    public ArrayList<Item> list_proposed_items = new ArrayList<>();
+    private Boolean use_real; // Do we use real value for preferences
+    private  Integer nb_crit; // Number of criterion to use
+    private  Integer nb_value; // Number of different values for criterions
+
+    private Integer nb_iterations = 0; // To track the number of iterations
+    private List<Integer> nb_arguments = new ArrayList<>(); // To track the number of arguments
+
+    private Item proposed_item; // Item currently in discussion
+    private Boolean position_item; // Position of the engineer for this item
+    private Arguments argument_item;  // Argument for this item
+    private Boolean first_argument = Boolean.FALSE; // Are we giving the first argument
+
+    public ArrayList<Item> list_initial_items = null; // List of initials item at the start
+    public ArrayList<Item> list_items = null; // Item currently available to discuss
+    public ArrayList<Item> list_proposed_items = new ArrayList<>(); // Item previously discussed
     public AID other_engineer = null;
 
 
     protected void setup() {
         System.out.println("Hallo! Engineer-agent "+getLocalName()+" is ready.");
 
-
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
             state = (String) args[0]; //get initial state
+            use_real = (Boolean) args[1];// Do we use real value for preferences
+            nb_crit = (Integer) args[2];
+            nb_value = (Integer) args[3];
         }
 
 
@@ -54,13 +66,11 @@ public class Engineer extends Agent {
         comportementSequentiel.addSubBehaviour(new RequestItemList());
         comportementSequentiel.addSubBehaviour(new DiscussItem());
         addBehaviour(comportementSequentiel);
-        takeDown();
     }
 
     protected void takeDown() {
         // Printout a dismissal message
-        System.out.println("Engineer agent " + getAID().getName() + " terminating.");
-
+        System.out.println("Engineer agent " + getLocalName() + " terminating.");
     }
 
 
@@ -89,21 +99,19 @@ public class Engineer extends Agent {
                         // Reply received
                         if (reply.getPerformative() == ACLMessage.INFORM_REF) {
                             // This is the list item to discussed
-                                //System.out.println(reply.getContent());
-                                list_initial_items = create_list_item_from_string(reply.getContent());
+
+                                //list_initial_items = create_list_item_from_string(reply.getContent());
+                                agent_pref = new Preferences(use_real);
+                                list_initial_items = use_csv_preferences(myAgent.getLocalName());
                                 list_items = new ArrayList<>(list_initial_items);
-                                //System.out.println("Updating the list with the item to discuss");
-                                //System.out.println("Generating preferences...");
-                                agent_pref = new Preferences();
-                                agent_pref.generating_random_preferences(list_initial_items);
-                                //list_initial_items = use_csv_preferences(myAgent.getLocalName());
+                                //agent_pref.generating_random_preferences(list_initial_items, nb_crit, nb_value);
+
                                 //agent_pref.print_preferences(list_initial_items);
 
                         }
                         else {
                             block();
                         }
-                        //System.out.println("Engineer-agent " + getLocalName() +" will discuss about : ");
                         step = 2;
                         break;
                     }
@@ -123,12 +131,12 @@ public class Engineer extends Agent {
         public void action() {
             switch (state) {
                 case "WAIT": // When in state WAIT
-                    //System.out.println(myAgent.getLocalName() + " IN WAIT MODE");
 
                     // Case when we received a proposition
                     ACLMessage reply = myAgent.receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
                     if (reply != null) {
-                        //System.out.println(myAgent.getLocalName() + " received a proposition !");
+
+                        nb_iterations += 1; // Update number of proposed item
                         String proposed_item_name = reply.getContent(); // Get Item name proposed by other agent
                         proposed_item = Item.get_item_from_name(proposed_item_name, list_items);
 
@@ -138,11 +146,10 @@ public class Engineer extends Agent {
                             state = "ACCEPT"; //Put the agent in state ACCEPT
                         }
                         else {
-                            //System.out.println("This item is not the best for this engineer.");
                             state = "ASK_WHY"; //Put the agent in state ASK_WHY
                         }
 
-                        list_items.remove(proposed_item); // remove item from list of inital items
+                        list_items.remove(proposed_item); // remove item from list of initial items
                         break;
                     }
 
@@ -164,8 +171,6 @@ public class Engineer extends Agent {
                     // Case when we received an ASK_WHY. We generate an argument.
                     reply = myAgent.receive(MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF));
                     if (reply != null) {
-                        //System.out.println(myAgent.getLocalName() + " received an ASKY_WHY.");
-                        //System.out.println(myAgent.getLocalName() + " is generating Arguments for item : " +proposed_item.get_name());
                         argument_item = new Arguments(proposed_item, position_item, agent_pref); // Create the argumentation
                         first_argument =  Boolean.TRUE;
                         myAgent.addBehaviour(new Argumentation()); // Start the argumentation process
@@ -177,7 +182,7 @@ public class Engineer extends Agent {
                     break;
 
                 case "PROPOSE":
-                    System.out.println("In propose State");
+                    nb_iterations += 1; // Update number of proposed item
                     Pair<Item, Boolean> a = get_next_favorite_item();
 
                     if(a.getValue()){ // If the next best item hasn't been proposed yet
@@ -204,7 +209,6 @@ public class Engineer extends Agent {
                     }
 
                 case "ACCEPT":
-                    //System.out.println(myAgent.getLocalName() + " IN ACCEPT STATE");
                     Message msg_accept = new Message(ACLMessage.ACCEPT_PROPOSAL,
                             getProposed_item().get_name(),
                             "accept_item",
@@ -221,11 +225,12 @@ public class Engineer extends Agent {
                             other_engineer);
                     System.out.println(myAgent.getLocalName() + ": COMMIT(" + getProposed_item().get_name() + ")");
                     myAgent.send(msg_commit.getMessage());
-                    state =  "DONE";//Put agent in WAIT mode
+                    state =  "DONE";//Put agent in DONE mode
+                    //System.out.println("Number of proposed item : "+nb_iterations);
+                    //System.out.println("Number of arguments for each item : "+ nb_arguments);
                     break;
 
                 case "ASK_WHY":
-                    //System.out.println(myAgent.getLocalName() + " IN ASK_WHY STATE");
                     Message msg_ask = new Message(ACLMessage.QUERY_REF,
                             getProposed_item().get_name(),
                             "query_ref",
@@ -243,11 +248,17 @@ public class Engineer extends Agent {
             }
         }
         public boolean done() {return (state.equals("DONE")); }
+
+        public int onEnd() {
+            myAgent.doDelete();
+            return super.onEnd();
+        }
     }
 
     private class Argumentation extends Behaviour{
 
-        private Boolean state_argument = Boolean.FALSE;
+        private Boolean state_argument = Boolean.FALSE; // Boolean to decide whether or not we end the argumentation process
+        private int nb_argument = 0; // To track nb of arguments for this item
 
         public void action(){
             /**
@@ -271,16 +282,19 @@ public class Engineer extends Agent {
                 proposed_item = Item.get_item_from_name(proposed_item_name, list_initial_items);
                 state_argument = Boolean.TRUE;
                 state = "COMMIT"; //We go to wait stage to receive the commit
+                nb_arguments.add(nb_argument);
             }
 
             // The other agent don't have any other arguments for previous item. He send a new item to discuss.
             reply = myAgent.receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
             if (reply != null) {
+                nb_iterations += 1; // Update number of proposed item
                 String proposed_item_name = reply.getContent(); // Get the item of the agent
                 proposed_item = Item.get_item_from_name(proposed_item_name, list_items);
                 state = test_pref_for_item(proposed_item); // We check our preferences for this new item.
                 list_items.remove(proposed_item); // We remove this item from the list
                 state_argument = Boolean.TRUE; // We leave the discussion
+                nb_arguments.add(nb_argument);
             }
 
             if (!waiting_for_answer |first_argument){ // If we want to give first argument or if we received an argument
@@ -293,7 +307,6 @@ public class Engineer extends Agent {
 
 
                 if (first_argument){ // Si c'est le premier argument de la discussion
-                    //System.out.println("We generate the first argument.");
                     CriterionValue argument_criterion = argument_item.get_best_argument();
                     argument_item.getArgument_score().remove(argument_criterion);
                     argument_string += argument_criterion.get_criterion_name().getName() +"="+argument_criterion.get_value().get_value();
@@ -302,25 +315,24 @@ public class Engineer extends Agent {
                 }
 
                 else { // Si un autre argument a été donné auparavant, lui répondre.
-                    System.out.println("Answering to argument");
                     CriterionName argument_to_counter = agent_pref.get_criterion_from_string(name_argument_to_counter);
                     CriterionValue argument_criterion = argument_item.find_argument(argument_to_counter);
                     argument_item.getArgument_score().remove(argument_criterion);
 
-                    try {
+                    try { // Try creating the argument
                         argument_string += argument_criterion.get_criterion_name().getName() +
                                 "=" + argument_criterion.get_value().get_value() +
                                 " AND " +
                                 argument_criterion.get_criterion_name().getName() + ">" + name_argument_to_counter;
                     }
-                    catch (NullPointerException e){
-                        System.out.println("No Argument to answer");
-                        state_argument= Boolean.TRUE;
+                    catch (NullPointerException e){ // If we can't, it means we have no argument to answer
+                        nb_arguments.add(nb_argument);
+                        state_argument= Boolean.TRUE; // End the argumentation at the end of the behavior
                         if (position_item){
-                            state =  "PROPOSE";
+                            state =  "PROPOSE"; // If we in favor of this item and we lost the argumentation, we propose a new one
                         }
                         else{
-                            state =  "PROPOSE"; // TO CHANGE TO ACCEPT
+                            state =  "ACCEPT"; // Else, we accept.
                         }
                     }
                 }
@@ -332,8 +344,8 @@ public class Engineer extends Agent {
                         other_engineer);
 
                 if (!state_argument) { // If we have found an argument
+                    nb_argument += 1; // Update nb_argument
                     myAgent.send(msg_commit.getMessage());
-
                     //PRINT THE ARGUMENT
                     String against = "";
                     if(!position_item){against = "NOT ";}
@@ -344,6 +356,7 @@ public class Engineer extends Agent {
             }
         }
 
+
         public boolean done() {
             return (state_argument);
         }
@@ -351,26 +364,11 @@ public class Engineer extends Agent {
 
     public String test_pref_for_item(Item item){
         if (agent_pref.most_prefered_item(list_items).equals(item)) {
-            //System.out.println("This item is also the best for this agent.");
             return "ACCEPT"; //Put the agent in state ACCEPT
         }
         else {
-            //System.out.println("This item is not the best for this engineer.");
             return "ASK_WHY"; //Put the agent in state ASK_WHY
         }
-    }
-
-    public ArrayList<Item> use_csv_preferences(String agent_name){
-        try {
-            return agent_pref.load_preferences(agent_name);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public Preferences getAgent_pref(){
-        return agent_pref;
     }
 
     public Item getProposed_item(){
@@ -383,6 +381,15 @@ public class Engineer extends Agent {
             final_list.add(new Item(name,"description"));
         }
         return final_list;
+    }
+
+    public ArrayList<Item> use_csv_preferences(String agent_name){
+        try {
+            return agent_pref.load_preferences(agent_name);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public Pair<Item,Boolean> get_next_favorite_item(){
@@ -398,7 +405,6 @@ public class Engineer extends Agent {
                 return new Pair<>(best_item,Boolean.TRUE);
             }
             else{
-                System.out.println("There is already an item that is better that non-proposed ones");
                 return new Pair<>(best_old_item,Boolean.FALSE);}
         }
         return new Pair<>(best_item,Boolean.TRUE);

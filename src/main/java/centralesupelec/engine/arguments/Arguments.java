@@ -22,7 +22,7 @@ public class Arguments {
         this.item = item;
         this.type = type;
         this.agent_pref = agent_pref;
-        this.threshold = 2;
+        this.threshold = (agent_pref.getNb_values())/2;
 
         generate_arguments();
 
@@ -34,7 +34,7 @@ public class Arguments {
          */
         if (type){ // If we want to give argument in favor of this item, get criterion above threshold
             for(CriterionValue criterionValue:agent_pref.get_criterion_values_list()){
-                if(criterionValue.get_value().get_score()>threshold & criterionValue.get_item().equals(item)){
+                if(criterionValue.get_value().get_score(agent_pref.getUse_real())>threshold & criterionValue.get_item().equals(item)){
                     //System.out.println(criterionValue.get_criterion_name().getName() + " " + criterionValue.get_value().get_value() + " " + criterionValue.get_value().get_score());
                     argument_score.add(criterionValue);
                 }
@@ -42,7 +42,7 @@ public class Arguments {
         }
         else{ // If we want to give argument in defavor of this item, get criterion under threshold
             for(CriterionValue criterionValue:agent_pref.get_criterion_values_list()){
-                if(criterionValue.get_value().get_score()<=threshold & criterionValue.get_item().equals(item)){
+                if(criterionValue.get_value().get_score(agent_pref.getUse_real())<=threshold & criterionValue.get_item().equals(item)){
                     argument_score.add(criterionValue);
                 }
             }
